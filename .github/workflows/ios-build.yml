@@ -1,5 +1,56 @@
 name: MTM MOVE iOS Build
+name: MTM MOVE iOS Build
 
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: |
+          cd ios
+          xcodegen generate
+
+      - name: Build iOS app
+        run: |
+          cd ios
+          xcodebuild \
+            -project MTMMOVE.xcodeproj \
+            -scheme MTMMOVE \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Package app
+        run: |
+          mkdir -p build
+          ditto "ios/build/Build/Products/Release-iphoneos/MTM MOVE.app" "build/MTM MOVE.app"
+
+      - name: Upload app
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtm-move-ios-build
+          path: build/MTM MOVE.app
+          if-no-files-found: error
 on:
   workflow_dispatch:
   push:
